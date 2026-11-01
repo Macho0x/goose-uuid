@@ -21,8 +21,8 @@ fn self_check() -> bool {
         0x91, 0x91, 0x08, 0xf7, 0x52, 0xd1, 0x33, 0x20,
         0x5b, 0xac, 0xf8, 0x47, 0xdb, 0x41, 0x48, 0xa8,
     ];
-    let id = from_random(raw);
-    if !is(id, "919108f7-52d1-4320-9bac-f847db4148a8") { return false; }
+    let id, idok = from_random(raw);
+    if !idok || !is(id, "919108f7-52d1-4320-9bac-f847db4148a8") { return false; }
     if uuid::version(id) != 4 || uuid::variant(id) != 2 { return false; }
     for i in 0..16 {
         if i == 6 || i == 8 { continue; }
@@ -33,9 +33,13 @@ fn self_check() -> bool {
     if !up_ok || up != id { return false; }
 
     var z: u8[16] = [0; 16];
-    if !is(from_random(z), "00000000-0000-4000-8000-000000000000") { return false; }
+    let zid, zok = from_random(z);
+    if !zok || !is(zid, "00000000-0000-4000-8000-000000000000") { return false; }
     var f: u8[16] = [0xff; 16];
-    if !is(from_random(f), "ffffffff-ffff-4fff-bfff-ffffffffffff") { return false; }
+    let fid, fok = from_random(f);
+    if !fok || !is(fid, "ffffffff-ffff-4fff-bfff-ffffffffffff") { return false; }
+    let short, short_ok = from_random([]);
+    if short_ok || short != zero() { return false; }
 
     if !rejected("") { return false; }
     if !rejected("919108f7-52d1-4320-9bac-f847db4148a") { return false; }

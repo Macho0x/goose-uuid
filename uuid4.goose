@@ -6,17 +6,19 @@ import uuid;
 
 namespace uuid4;
 
-fn from_random(rand: u8[:]) -> uuid::Id {
-    if rand.len != 16 { abort("uuid4: random data must be 16 bytes"); }
-    var id = uuid::from_bytes(rand);
+fn from_random(rand: u8[:]) -> uuid::Id, bool {
+    let id, ok = uuid::from_bytes(rand);
+    if !ok { return uuid::nil(), false; }
     uuid::stamp(id, 4);
-    return id;
+    return id, true;
 }
 
 fn new() -> uuid::Id {
     var raw: u8[16] = [0; 16];
     uuid::random_bytes(raw);
-    return from_random(raw);
+    let id, ok = from_random(raw);
+    if !ok { abort("uuid4: random block"); }
+    return id;
 }
 
 fn parse(s: u8[:]) -> uuid::Id, bool {

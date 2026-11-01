@@ -161,15 +161,15 @@ fn parse(s: u8[:]) -> Id, bool {
     return nil(), false;
 }
 
-fn from_bytes(b: u8[:]) -> Id {
-    if b.len != 16 { abort("uuid: 16 bytes"); }
+fn from_bytes(b: u8[:]) -> Id, bool {
+    if b.len != 16 { return nil(), false; }
     var id = nil();
     for i in 0..16 { id.b[i] = b[i]; }
-    return id;
+    return id, true;
 }
 
-fn from_bytes_le(b: u8[:]) -> Id {
-    if b.len != 16 { abort("uuid: 16 bytes"); }
+fn from_bytes_le(b: u8[:]) -> Id, bool {
+    if b.len != 16 { return nil(), false; }
     var id = nil();
     id.b[0] = b[3];
     id.b[1] = b[2];
@@ -180,7 +180,7 @@ fn from_bytes_le(b: u8[:]) -> Id {
     id.b[6] = b[7];
     id.b[7] = b[6];
     for i in 8..16 { id.b[i] = b[i]; }
-    return id;
+    return id, true;
 }
 
 fn bytes_le(id: Id) -> u8[16] {
@@ -197,8 +197,8 @@ fn bytes_le(id: Id) -> u8[16] {
     return b;
 }
 
-fn from_fields(d1: u32, d2: u16, d3: u16, d4: u8[:]) -> Id {
-    if d4.len != 8 { abort("uuid: last field must be 8 bytes"); }
+fn from_fields(d1: u32, d2: u16, d3: u16, d4: u8[:]) -> Id, bool {
+    if d4.len != 8 { return nil(), false; }
     var id = nil();
     id.b[0] = (d1 >> 24) as! u8;
     id.b[1] = (d1 >> 16) as! u8;
@@ -209,11 +209,11 @@ fn from_fields(d1: u32, d2: u16, d3: u16, d4: u8[:]) -> Id {
     id.b[6] = (d3 >> 8) as! u8;
     id.b[7] = d3 as! u8;
     for i in 0..8 { id.b[8 + i] = d4[i]; }
-    return id;
+    return id, true;
 }
 
-fn from_fields_le(d1: u32, d2: u16, d3: u16, d4: u8[:]) -> Id {
-    if d4.len != 8 { abort("uuid: last field must be 8 bytes"); }
+fn from_fields_le(d1: u32, d2: u16, d3: u16, d4: u8[:]) -> Id, bool {
+    if d4.len != 8 { return nil(), false; }
     var raw: u8[16] = [0; 16];
     raw[0] = d1 as! u8;
     raw[1] = (d1 >> 8) as! u8;
@@ -271,8 +271,8 @@ fn ticks_to_unix(ticks: u64) -> u64, u32 {
     return d / 10000000, ((d % 10000000) * 100) as! u32;
 }
 
-fn v1(ticks: u64, counter: u16, node: u8[:]) -> Id {
-    if node.len != 6 { abort("uuid: node id must be 6 bytes"); }
+fn v1(ticks: u64, counter: u16, node: u8[:]) -> Id, bool {
+    if node.len != 6 { return nil(), false; }
     let time_low = (ticks & 0xffffffff) as! u32;
     let time_mid = ((ticks >> 32) & 0xffff) as! u16;
     let time_hi = (((ticks >> 48) & 0x0fff) as! u16) | 0x1000;
@@ -283,8 +283,8 @@ fn v1(ticks: u64, counter: u16, node: u8[:]) -> Id {
     return from_fields(time_low, time_mid, time_hi, d4);
 }
 
-fn v6(ticks: u64, counter: u16, node: u8[:]) -> Id {
-    if node.len != 6 { abort("uuid: node id must be 6 bytes"); }
+fn v6(ticks: u64, counter: u16, node: u8[:]) -> Id, bool {
+    if node.len != 6 { return nil(), false; }
     let time_high = ((ticks >> 28) & 0xffffffff) as! u32;
     let time_mid = ((ticks >> 12) & 0xffff) as! u16;
     let time_low = ((ticks & 0x0fff) as! u16) | 0x6000;

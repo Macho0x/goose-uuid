@@ -6,9 +6,9 @@ import uuid;
 
 namespace uuid8;
 
-fn new(b: u8[:]) -> uuid::Id {
-    if b.len != 16 { abort("uuid8: 16 bytes"); }
-    var id = uuid::from_bytes(b);
+fn new(b: u8[:]) -> uuid::Id, bool {
+    let id, ok = uuid::from_bytes(b);
+    if !ok { return uuid::nil(), false; }
     uuid::stamp(id, 8);
-    return id;
+    return id, true;
 }

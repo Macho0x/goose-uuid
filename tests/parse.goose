@@ -26,19 +26,23 @@ fn self_check() -> bool {
         0xa1, 0xa2, 0xa3, 0xa4, 0xb1, 0xb2, 0xc1, 0xc2,
         0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xd8,
     ];
-    let le = uuid::from_bytes_le(raw);
-    if str(le) != "a4a3a2a1-b2b1-c2c1-d1d2-d3d4d5d6d7d8" { return false; }
+    let le, lek = uuid::from_bytes_le(raw);
+    if !lek || str(le) != "a4a3a2a1-b2b1-c2c1-d1d2-d3d4d5d6d7d8" { return false; }
     let back = uuid::bytes_le(le);
     for i in 0..16 { if back[i] != raw[i] { return false; } }
 
-    let fields = uuid::from_fields(0x67e55044, 0x10b1, 0x426f, [
+    let fields, fok = uuid::from_fields(0x67e55044, 0x10b1, 0x426f, [
         0x92, 0x47, 0xbb, 0x68, 0x0e, 0x5f, 0xe0, 0xc8,
     ]);
-    if fields != id { return false; }
-    let fields_le = uuid::from_fields_le(0xa1a2a3a4, 0xb1b2, 0xc1c2, [
+    if !fok || fields != id { return false; }
+    let fields_le, flek = uuid::from_fields_le(0xa1a2a3a4, 0xb1b2, 0xc1c2, [
         0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xd8,
     ]);
-    if str(fields_le) != "a4a3a2a1-b2b1-c2c1-d1d2-d3d4d5d6d7d8" { return false; }
+    if !flek || str(fields_le) != "a4a3a2a1-b2b1-c2c1-d1d2-d3d4d5d6d7d8" { return false; }
+    let short_f, sfok = uuid::from_fields(0, 0, 0, []);
+    if sfok || !uuid::is_nil(short_f) { return false; }
+    let short_fle, sflek = uuid::from_fields_le(0, 0, 0, [0]);
+    if sflek || !uuid::is_nil(short_fle) { return false; }
     let hi, lo = uuid::u64_pair(id);
     if uuid::from_u64_pair(hi, lo) != id { return false; }
 
@@ -49,14 +53,18 @@ fn self_check() -> bool {
 
     var ms_b: u8[16] = [0; 16];
     ms_b[8] = 0xc0;
-    let ms = uuid::from_bytes(ms_b);
-    if uuid::variant_kind(ms) != 2 || uuid::variant(ms) != 3 { return false; }
-    let ncs = uuid::from_bytes([0; 16]);
-    if uuid::variant_kind(ncs) != 0 { return false; }
+    let ms, msok = uuid::from_bytes(ms_b);
+    if !msok || uuid::variant_kind(ms) != 2 || uuid::variant(ms) != 3 { return false; }
+    let ncs, ncsok = uuid::from_bytes([0; 16]);
+    if !ncsok || uuid::variant_kind(ncs) != 0 { return false; }
     var fut_b: u8[16] = [0; 16];
     fut_b[8] = 0xe0;
-    let fut = uuid::from_bytes(fut_b);
-    if uuid::variant_kind(fut) != 3 { return false; }
+    let fut, futok = uuid::from_bytes(fut_b);
+    if !futok || uuid::variant_kind(fut) != 3 { return false; }
+    let short_b, sbok = uuid::from_bytes([]);
+    if sbok || !uuid::is_nil(short_b) { return false; }
+    let short_le, sleok = uuid::from_bytes_le([1]);
+    if sleok || !uuid::is_nil(short_le) { return false; }
     return true;
 }
 

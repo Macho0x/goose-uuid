@@ -21,24 +21,32 @@ fn before(a: u8[:], b: u8[:]) -> bool {
 fn self_check() -> bool {
     // RFC 9562 appendix A.6. Tuesday, February 22, 2022 2:22:22.00 PM GMT-05:00.
     var rand: u8[10] = [0x0c, 0xc3, 0x18, 0xc4, 0xdc, 0x0c, 0x0c, 0x07, 0x39, 0x8f];
-    let id = from_millis(0x017F22E279B0, rand);
-    if !is(id, "017f22e2-79b0-7cc3-98c4-dc0c0c07398f") { return false; }
+    let id, idok = from_millis(0x017F22E279B0, rand);
+    if !idok || !is(id, "017f22e2-79b0-7cc3-98c4-dc0c0c07398f") { return false; }
     if unix_ms(id) != 0x017F22E279B0 || unix_ms(id) != 1645557742000 { return false; }
     let tm, tok = uuid::time(id);
     if !tok || tm.seconds != 1645557742 || tm.nanos != 0 || tm.counter != 0 { return false; }
     var junk: u8[10] = [0xac, 0xc3, 0xd8, 0xc4, 0xdc, 0x0c, 0x0c, 0x07, 0x39, 0x8f];
-    if from_millis(0x017F22E279B0, junk) != id { return false; }
+    let junked, junk_ok = from_millis(0x017F22E279B0, junk);
+    if !junk_ok || junked != id { return false; }
     let up, up_ok = parse("017F22E2-79B0-7CC3-98C4-DC0C0C07398F");
     if !up_ok || up != id { return false; }
 
     var quiet: u8[10] = [0; 10];
-    if !is(from_millis(0, quiet), "00000000-0000-7000-8000-000000000000") { return false; }
-    if !is(from_millis(0xffffffffffff, quiet), "ffffffff-ffff-7000-8000-000000000000") { return false; }
+    let q0, q0ok = from_millis(0, quiet);
+    if !q0ok || !is(q0, "00000000-0000-7000-8000-000000000000") { return false; }
+    let qf, qfok = from_millis(0xffffffffffff, quiet);
+    if !qfok || !is(qf, "ffffffff-ffff-7000-8000-000000000000") { return false; }
+    let wide, wide_ok = from_millis(1 << 48, quiet);
+    if wide_ok || !uuid::is_nil(wide) { return false; }
+    let short, short_ok = from_millis(0, []);
+    if short_ok || !uuid::is_nil(short) { return false; }
 
     // A later millisecond sorts after, whatever the random bits are.
     var noisy: u8[10] = [0xff; 10];
-    let early = from_millis(1000, noisy);
-    let later = from_millis(1001, quiet);
+    let early, early_ok = from_millis(1000, noisy);
+    let later, later_ok = from_millis(1001, quiet);
+    if !early_ok || !later_ok { return false; }
     let early_s = str(early);
     let later_s = str(later);
     if !before(early.b, later.b) || !before(early_s, later_s) { return false; }
@@ -47,8 +55,9 @@ fn self_check() -> bool {
     var lo: u8[10] = [0; 10];
     var hi: u8[10] = [0; 10];
     hi[1] = 1;
-    let a = from_millis(1000, lo);
-    let b = from_millis(1000, hi);
+    let a, aok = from_millis(1000, lo);
+    let b, bok = from_millis(1000, hi);
+    if !aok || !bok { return false; }
     let a_s = str(a);
     let b_s = str(b);
     if a == b || unix_ms(a) != 1000 || unix_ms(b) != 1000 { return false; }
@@ -59,9 +68,11 @@ fn self_check() -> bool {
     if v4ok || v4 != none { return false; }
 
     let t0 = time_ns() / 1000000;
-    let made = new();
+    let made, made_ok = new();
     let t1 = time_ns() / 1000000;
-    if uuid::version(made) != 7 || uuid::variant(made) != 2 { return false; }
+    if !made_ok || uuid::version(made) != 7 || uuid::variant(made) != 2 { return false; }
+    let early_ns, early_ns_ok = from_ns(-1);
+    if early_ns_ok || !uuid::is_nil(early_ns) { return false; }
     let ms = unix_ms(made);
     if ms < t0 as u64 || ms > t1 as u64 { return false; }
     let back, bok = parse(str(made));
@@ -73,8 +84,8 @@ fn self_check() -> bool {
     if unix_ms(c1) != 1000 || !before(c1.b, c2.b) { return false; }
     var prev = made;
     for _n in 0..8 {
-        let nxt = new();
-        if unix_ms(nxt) < unix_ms(prev) { return false; }
+        let nxt, nxt_ok = new();
+        if !nxt_ok || unix_ms(nxt) < unix_ms(prev) { return false; }
         if unix_ms(nxt) == unix_ms(prev) && !before(prev.b, nxt.b) { return false; }
         prev = nxt;
     }

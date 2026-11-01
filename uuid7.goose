@@ -32,9 +32,8 @@ struct ContextV7 {
 var shared: ContextV7;
 var shared_on = false;
 
-fn from_millis(unix_ms: u64, rand: u8[:]) -> uuid::Id {
-    if unix_ms >> 48 != 0 { abort("uuid7: unix_ms must fit in 48 bits"); }
-    if rand.len != 10 { abort("uuid7: random data must be 10 bytes"); }
+fn from_millis(unix_ms: u64, rand: u8[:]) -> uuid::Id, bool {
+    if unix_ms >> 48 != 0 || rand.len != 10 { return uuid::nil(), false; }
     var id = uuid::Id { b: [0; 16] };
     var ms = unix_ms;
     for i in 0..6 {
@@ -45,7 +44,7 @@ fn from_millis(unix_ms: u64, rand: u8[:]) -> uuid::Id {
     id.b[7] = rand[1];
     id.b[8] = 0x80 | (rand[2] & 0x3f);
     for i in 0..7 { id.b[9 + i] = rand[3 + i]; }
-    return id;
+    return id, true;
 }
 
 fn unix_ms(id: uuid::Id) -> u64 {
@@ -201,7 +200,9 @@ fn layout(millis: u64, counter: u64, bits_in: i64, rand: Wide) -> uuid::Id {
     for i in 0..8 { raw[7 - i] = hi as! u8; hi = hi >> 8; }
     raw[8] = (mixed.lo >> 56) as! u8;
     raw[9] = (mixed.lo >> 48) as! u8;
-    return from_millis(millis, raw);
+    let id, ok = from_millis(millis, raw);
+    if !ok { abort("uuid7: timestamp does not fit"); }
+    return id;
 }
 
 fn fresh() -> Wide { Wide { hi: random_seed(), lo: random_seed() } }
@@ -212,16 +213,19 @@ fn from_context(c: ContextV7&, seconds: u64, nanos: u32) -> uuid::Id {
     return layout(millis, counter, 42, fresh());
 }
 
-fn new() -> uuid::Id {
-    let ns = time_ns();
-    if ns < 0 { abort("uuid7: clock is before the Unix epoch"); }
+fn from_ns(ns: i64) -> uuid::Id, bool {
+    if ns < 0 { return uuid::nil(), false; }
     if !shared_on {
         shared = context(random_seed());
         shared_on = true;
     }
     let seconds = (ns / 1000000000) as u64;
     let nanos = (ns % 1000000000) as! u32;
-    return from_context(shared, seconds, nanos);
+    return from_context(shared, seconds, nanos), true;
+}
+
+fn new() -> uuid::Id, bool {
+    return from_ns(time_ns());
 }
 
 fn parse(s: u8[:]) -> uuid::Id, bool {
