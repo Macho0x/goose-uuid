@@ -1,5 +1,5 @@
-// UUID version 7 (RFC 9562 §5.7), including the Rust uuid crate's ContextV7.
-// from_millis writes an explicit 10-byte random block. new is Uuid::now_v7:
+// UUID version 7 (RFC 9562 §5.7), with a monotonic counter.
+// from_millis writes an explicit 10-byte random block. new:
 // a process-local 42-bit counter that reseeds each millisecond, ignores a
 // clock step backward, and bumps the timestamp if the counter wraps.
 // The counter occupies the high bits of rand_a and rand_b. The rest is random.
@@ -176,7 +176,7 @@ fn w_max() -> Wide {
     return Wide { hi: ones, lo: ones };
 }
 
-// Rust Uuid::new_v7. bits is the counter width. rand fills the bits the counter does not.
+// bits is the counter width. rand fills the bits the counter does not.
 fn layout(millis: u64, counter: u64, bits_in: i64, rand: Wide) -> uuid::Id {
     var bits = bits_in;
     if bits > 128 { bits = 128; }

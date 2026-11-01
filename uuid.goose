@@ -1,4 +1,4 @@
-// UUID bytes and text (RFC 9562), matching the Rust uuid crate.
+// UUID bytes and text (RFC 9562).
 // Versions are separate modules. Importing the package loads this file only.
 // Text output is lowercase. parse accepts the dashed form, the 32-digit form,
 // "{...}", and "urn:uuid:..." in either hex case.
@@ -60,7 +60,7 @@ fn version(id: Id) -> u8 { id.b[6] >> 4 }
 // The top two bits of octet 8: 0, 1, 2 (RFC 4122), or 3.
 fn variant(id: Id) -> u8 { id.b[8] >> 6 }
 
-// Rust's Variant: 0 NCS, 1 RFC 4122, 2 Microsoft, 3 future.
+// Variant class: 0 NCS, 1 RFC 4122, 2 Microsoft, 3 future.
 fn variant_kind(id: Id) -> u8 {
     let x = id.b[8];
     if x & 0x80 == 0 { return 0; }

@@ -1,4 +1,4 @@
-// Version 6 vectors from the Rust uuid crate.
+// Version 6 timestamp vectors.
 
 import uuid from "..";
 import uuid.uuid6;

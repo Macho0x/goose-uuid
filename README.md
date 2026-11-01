@@ -1,8 +1,8 @@
 # goose-uuid
 
-Version 0.1.
+Version 0.2.
 
-UUIDs in [Goose](https://github.com/aardappel/goose), as specified by [RFC 9562](https://www.rfc-editor.org/rfc/rfc9562). The behavior matches the Rust `uuid` crate at 1.29: versions 1, 3, 4, 5, 6, 7, and 8, the nil and max values, and the four text forms.
+UUIDs in [Goose](https://github.com/aardappel/goose), as specified by [RFC 9562](https://www.rfc-editor.org/rfc/rfc9562). Versions 1, 3, 4, 5, 6, 7, and 8, the nil and max values, and the four text forms.
 
 The default text is 36 characters, `8-4-4-4-12`, lowercase. `parse` also accepts 32 hex digits, `{8-4-4-4-12}`, and `urn:uuid:`, in either hex case. The URN prefix is case-insensitive.
 
@@ -50,6 +50,6 @@ fn main() {
 
 `uuid4::new` and the random fill inside `uuid7::new` read `/dev/urandom` through `os.random_seed` on Linux. On Windows the Goose runtime mixes clocks, which is not a CSPRNG.
 
-`uuid1::now` and `uuid6::now` share one 14-bit clock sequence. It starts from `os.random_seed` and wraps. `uuid7::new` matches Rust `Uuid::now_v7`: a 42-bit counter that reseeds when the millisecond changes, keeps the last timestamp if the clock steps backward, and moves the timestamp forward if the counter runs out. `uuid7::from_millis` still writes an explicit 10-byte block, with `rand_a` in the first two bytes and `rand_b` in the rest.
+`uuid1::now` and `uuid6::now` share one 14-bit clock sequence. It starts from `os.random_seed` and wraps. `uuid7::new` keeps a 42-bit counter that reseeds when the millisecond changes, keeps the last timestamp if the clock steps backward, and moves the timestamp forward if the counter runs out. `uuid7::from_millis` writes an explicit 10-byte block, with `rand_a` in the first two bytes and `rand_b` in the rest.
 
-`uuid7::context`, `adjust_by_millis`, and `set_precision` are the Rust `ContextV7` options. Precision bits are capped at 12 and occupy the high bits of the counter. There is no `u128`; `uuid::from_u64_pair` is the pair of halves. Goose threads do not share memory, so there is no mutex around the counters.
+`uuid7::context`, `adjust_by_millis`, and `set_precision` configure that counter. Precision bits are capped at 12 and occupy the high bits of the counter. A 128-bit value is two `u64` halves, via `uuid::from_u64_pair`. Goose threads do not share memory, so the counters are process-local.
