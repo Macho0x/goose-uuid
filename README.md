@@ -6,7 +6,7 @@
 
 <p align="center">
   🪪 UUIDs for <a href="https://github.com/aardappel/goose">Goose</a><br>
-  <strong>0.4</strong> · <a href="LICENSE">Apache-2.0</a>
+  <strong>0.4.1</strong> · <a href="LICENSE">Apache-2.0</a>
 </p>
 
 UUIDs as specified by [RFC 9562](https://www.rfc-editor.org/rfc/rfc9562). Versions 1, 3, 4, 5, 6, 7, and 8, the nil and max values, and the four text forms.
@@ -62,6 +62,17 @@ A short byte string returns `false` and the nil UUID. So does a clock before the
 `uuid1::now` and `uuid6::now` share one 14-bit clock sequence. It starts from `os.random_seed` and wraps. `uuid7::new` keeps a 42-bit counter that reseeds when the millisecond changes, keeps the last timestamp if the clock steps backward, and moves the timestamp forward if the counter runs out. `uuid7::from_millis` writes an explicit 10-byte block, with `rand_a` in the first two bytes and `rand_b` in the rest.
 
 `uuid7::context`, `adjust_by_millis`, and `set_precision` configure that counter. Precision bits are capped at 12 and occupy the high bits of the counter. A 128-bit value is two `u64` halves, via `uuid::from_u64_pair`. Goose threads do not share memory, so the counters are process-local.
+
+## Benchmarks
+
+`bench.goose` times this package. The row names stay fixed, so a clang run before a change and a clang run after it compare.
+
+```sh
+goose build -o uuid-bench bench.goose --cc clang
+./uuid-bench
+```
+
+`goose bench.goose` runs in TinyCC. That is not a timing result. Numbers depend on the machine, so this page does not publish them.
 
 ## License
 
